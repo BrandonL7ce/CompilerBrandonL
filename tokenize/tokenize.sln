@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "tokenize", "tokenize\tokenize.njsproj", "{A83C83E6-44E1-4FAF-B5BB-2277FA5A6A04}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A83C83E6-44E1-4FAF-B5BB-2277FA5A6A04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A83C83E6-44E1-4FAF-B5BB-2277FA5A6A04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A83C83E6-44E1-4FAF-B5BB-2277FA5A6A04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A83C83E6-44E1-4FAF-B5BB-2277FA5A6A04}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5D8C2BA-D81A-48B1-86F0-822116B21400}
+	EndGlobalSection
+EndGlobal
