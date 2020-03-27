@@ -96,7 +96,7 @@ function parse(txt) {
     let antlrroot = parser.start();
     // ...
     let root = walk(parser, antlrroot);
-    return "";
+    return root;
 }
 exports.parse = parse;
 //# sourceMappingURL=parser.js.map

@@ -109,5 +109,5 @@ export function parse(txt: string) {
     let antlrroot = parser.start();
     // ...
     let root: TreeNode = walk(parser, antlrroot);
-    return "";
+    return root;
 }
