@@ -1,44 +1,37 @@
-declare var require: any;
-let antlr4 = require('./antlr4')
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+let antlr4 = require('./antlr4');
 let Lexer = require('./gramLexer.js').gramLexer;
 let Parser = require('./gramParser.js').gramParser;
-let asmCode: string[] = [];
-
+let asmCode = [];
 class Token {
-    sym: string;
-    line: number;
-    lexeme: string;
-    constructor(sym: string, line: number, lexeme: string) {
+    constructor(sym, line, lexeme) {
         this.sym = sym;
         this.line = line;
         this.lexeme = lexeme;
     }
     toString() {
-        return `${this.sym} ${this.line} ${this.lexeme}`
+        return `${this.sym} ${this.line} ${this.lexeme}`;
     }
 }
-
 class TreeNode {
-    sym: string;
-    token: Token;
-    children: TreeNode[];
-    constructor(sym: string, token: Token) {
+    constructor(sym, token) {
         this.sym = sym;
         this.token = token;
         this.children = [];
     }
     toString() {
-        function walk(n: any, callback: any) {
+        function walk(n, callback) {
             callback(n);
-            n.children.forEach((x: any) => {
+            n.children.forEach((x) => {
                 walk(x, callback);
             });
         }
-        let L: string[] = [];
+        let L = [];
         L.push("digraph d{");
         L.push(`node [fontname="Helvetica",shape=box];`);
         let counter = 0;
-        walk(this, (n: any) => {
+        walk(this, (n) => {
             n.NUMBER = "n" + (counter++);
             let tmp = n.sym;
             if (n.token) {
@@ -49,11 +42,10 @@ class TreeNode {
             tmp = tmp.replace(/</g, "&lt;");
             tmp = tmp.replace(/>/g, "&gt;");
             tmp = tmp.replace(/\n/g, "<br/>");
-
             L.push(`${n.NUMBER} [label=<${tmp}>];`);
         });
-        walk(this, (n: any) => {
-            n.children.forEach((x: any) => {
+        walk(this, (n) => {
+            n.children.forEach((x) => {
                 L.push(`${n.NUMBER} -> ${x.NUMBER};`);
             });
         });
@@ -61,33 +53,26 @@ class TreeNode {
         return L.join("\n");
     }
 }
-
-function assertNode(n: TreeNode, sym: string) {
+function assertNode(n, sym) {
     if (n === undefined)
         throw new Error("n is undefined");
     if (n.sym !== sym) {
         throw new Error("Expected to find node " + sym + " but found " + n.sym);
     }
 }
-
 class ErrorHandler {
-    syntaxError(rec: any, sym: any, line: number,
-        column: number, msg: string, e: any) {
-        console.log("Syntax error:", msg, "on line", line,
-            "at column", column);
+    syntaxError(rec, sym, line, column, msg, e) {
+        console.log("Syntax error:", msg, "on line", line, "at column", column);
         throw new Error("Syntax error in ANTLR parse");
     }
 }
-
 function ICE() {
     throw new Error("Internal Compiler Error!");
 }
-
-function emit(instr: string) {
+function emit(instr) {
     asmCode.push(instr);
 }
-
-function makeAsm(root: TreeNode) {
+function makeAsm(root) {
     asmCode = [];
     labelCounter = 0;
     emit("default rel");
@@ -99,31 +84,30 @@ function makeAsm(root: TreeNode) {
     emit("section .data");
     return asmCode.join("\n");
 }
-
-function walk(parser: any, node: any) {
-    let p: any = node.getPayload();
+function walk(parser, node) {
+    let p = node.getPayload();
     if (p.ruleIndex === undefined) {
-        let line: number = p.line;
-        let lexeme: string = p.text;
-        let ty: number = p.type;
-        let sym: string = parser.symbolicNames[ty]
+        let line = p.line;
+        let lexeme = p.text;
+        let ty = p.type;
+        let sym = parser.symbolicNames[ty];
         if (sym === null)
             sym = lexeme.toUpperCase();
-        let T = new Token(sym, line, lexeme)
-        return new TreeNode(sym, T)
-    } else {
-        let idx: number = p.ruleIndex;
-        let sym: string = parser.ruleNames[idx]
-        let N = new TreeNode(sym, undefined)
+        let T = new Token(sym, line, lexeme);
+        return new TreeNode(sym, T);
+    }
+    else {
+        let idx = p.ruleIndex;
+        let sym = parser.ruleNames[idx];
+        let N = new TreeNode(sym, undefined);
         for (let i = 0; i < node.getChildCount(); ++i) {
-            let child: any = node.getChild(i)
+            let child = node.getChild(i);
             N.children.push(walk(parser, child));
         }
         return N;
     }
 }
-
-export function parse(txt: string) {
+function parse(txt) {
     let stream = new antlr4.InputStream(txt);
     let lexer = new Lexer(stream);
     let tokens = new antlr4.CommonTokenStream(lexer);
@@ -132,96 +116,90 @@ export function parse(txt: string) {
     let handler = new ErrorHandler();
     lexer.removeErrorListeners();
     lexer.addErrorListener(handler);
-    parser.removeErrorListeners()
+    parser.removeErrorListeners();
     parser.addErrorListener(handler);
     let antlrroot = parser.start();
-    let root: TreeNode = walk(parser, antlrroot);
-    
+    let root = walk(parser, antlrroot);
     return makeAsm(root);
 }
-
-function programNodeCode(n: TreeNode) {
+exports.parse = parse;
+function programNodeCode(n) {
     assertNode(n, "program");
     if (n.sym != "program")
         ICE();
     braceblockNodeCode(n.children[0]);
 }
-
-function braceblockNodeCode(n: TreeNode) {
+function braceblockNodeCode(n) {
     assertNode(n, "braceblock");
     stmtsNodeCode(n.children[1]);
 }
-
-function stmtsNodeCode(n: TreeNode) {
+function stmtsNodeCode(n) {
     if (n.children.length == 0 || n.children[0].sym == "lambda")
         return;
     stmtNodeCode(n.children[0]);
     stmtsNodeCode(n.children[1]);
 }
-
-function stmtNodeCode(n: TreeNode) {
+function stmtNodeCode(n) {
     let c = n.children[0];
     switch (c.sym) {
         case "cond":
-            condNodeCode(c); break;
+            condNodeCode(c);
+            break;
         case "loop":
-            loopNodeCode(c); break;
+            loopNodeCode(c);
+            break;
         case "returnStmt":
-            returnstmtNodeCode(c); break;
+            returnstmtNodeCode(c);
+            break;
         default:
             ICE();
     }
 }
-
-function returnstmtNodeCode(n: TreeNode) {
-    exprNodeCode(n.children[1]); 
+function returnstmtNodeCode(n) {
+    exprNodeCode(n.children[1]);
     emit("ret");
 }
-
-function exprNodeCode(n: TreeNode) {
+function exprNodeCode(n) {
     let d = parseInt(n.children[0].token.lexeme, 10);
     emit(`mov rax, ${d}`);
 }
-
 let labelCounter = 0;
 function label() {
     let s = "lbl" + labelCounter;
     labelCounter++;
     return s;
 }
-
-function condNodeCode(n: TreeNode) {
+function condNodeCode(n) {
     if (n.children.length === 5) {
-        exprNodeCode(n.children[2]);    
+        exprNodeCode(n.children[2]);
         emit("cmp rax, 0");
         var endifLabel = label();
         emit(`je ${endifLabel}`);
         braceblockNodeCode(n.children[4]);
         emit(`${endifLabel}:`);
-
-    } else {
+    }
+    else {
         exprNodeCode(n.children[2]);
         var endifLabel = label();
         var endElseLabel = label();
         emit("cmp rax, 0");
-        emit(`je ${endifLabel}`);               
-        braceblockNodeCode(n.children[4]);      
-        emit(`jmp ${endElseLabel}`);            
-        emit(`${endifLabel}:`);                 
+        emit(`je ${endifLabel}`);
+        braceblockNodeCode(n.children[4]);
+        emit(`jmp ${endElseLabel}`);
+        emit(`${endifLabel}:`);
         braceblockNodeCode(n.children[6]);
         emit(`${endElseLabel}:`);
     }
 }
-
-function loopNodeCode(n: TreeNode) {
+function loopNodeCode(n) {
     var whileLabel = label();
     var endWhileLabel = label();
-    emit(`${whileLabel}:`)                     
+    emit(`${whileLabel}:`);
     exprNodeCode(n.children[2]);
-    emit("cmp rax, 0");                        
+    emit("cmp rax, 0");
     emit(`je ${endWhileLabel}`);
-    braceblockNodeCode(n.children[4]);          
-    emit(`jmp ${whileLabel}`);                  
-    emit(`${endWhileLabel}:`);                 
+    braceblockNodeCode(n.children[4]);
+    emit(`jmp ${whileLabel}`);
+    emit(`${endWhileLabel}:`);
 }
-
+//# sourceMappingURL=parser.js.map
